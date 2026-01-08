@@ -11,42 +11,55 @@ class VersionManager_setNumLockStateEx
     static _ := VersionManager_setNumLockStateEx._init()
     _init()    {
         global
-        SETNUMLOCKSTATEEX_VERSION := "1.0.0"
+        SETNUMLOCKSTATEEX_VERSION := "1.1.0"
     }
 }
-setNumLockStateEx(onoff:="", checkCurrentState:=true)    {
-    bRet:=false
-    prevSCS:=A_StringCaseSense
+setNumLockStateEx(onOff := "", checkCurrentState := false)    {
+    static isNumLockAlways := false
+    bRet := false
+    prevSCS := A_StringCaseSense
     stringCaseSense Off
-    switch (onoff)
+    switch (onOff)
     {
         case "":
+            isNumLockAlways := false
             setNumLockState
-        case "On",true:
-            if (checkCurrentState && getKeyState("NumLock","T"))
+        case "On", true:
+            if (checkCurrentState && !isNumLockAlways && getKeyState("NumLock", "T"))
                 goto Cleanup_A7C1484E
+            isNumLockAlways := false
             setNumLockState On
-        case "Off",false:
-            if (checkCurrentState && !getKeyState("NumLock","T"))
+        case "Off", false:
+            if (checkCurrentState && !isNumLockAlways && !getKeyState("NumLock", "T"))
                 goto Cleanup_A7C1484E
+            isNumLockAlways := false
             setNumLockState Off
-        case "Toggle",-1:
-            setNumLockState % (!getKeyState("NumLock","T"))
+        case "Toggle", -1:
+            isNumLockAlways := false
+            setNumLockState % (!getKeyState("NumLock", "T"))
         ;---------------------------------
-        case "Always","A":
-            setNumLockState % "Always" (getKeyState("NumLock","T")?"On":"Off")
-        case "AlwaysOn","1A":
-            if (checkCurrentState && getKeyState("NumLock","T"))
+        case "Always", "A":
+            isNumLockAlways := true
+            setNumLockState % "Always" (getKeyState("NumLock", "T") ? "On" : "Off")
+        case "AlwaysOn", "1A":
+            if (checkCurrentState && isNumLockAlways && getKeyState("NumLock", "T"))
                 goto Cleanup_A7C1484E
+            isNumLockAlways := true
             setNumLockState AlwaysOn
-        case "AlwaysOff","0A":
-            if (checkCurrentState && !getKeyState("NumLock","T"))
+        case "AlwaysOff", "0A":
+            if (checkCurrentState && isNumLockAlways && !getKeyState("NumLock", "T"))
                 goto Cleanup_A7C1484E
+            isNumLockAlways := true
             setNumLockState AlwaysOff
-        case "AlwaysToggle","-1A":
-            setNumLockState % "Always" (getKeyState("NumLock","T")?"Off":"On")
+        case "AlwaysToggle", "-1A":
+            isNumLockAlways := true
+            setNumLockState % "Always" (getKeyState("NumLock", "T") ? "Off" : "On")
+        ;---------------------------------
+        case "IsAlways":
+            bRet := isNumLockAlways
+            goto Cleanup_A7C1484E
     }
-    bRet:=true
+    bRet := true
 Cleanup_A7C1484E:
     stringCaseSense % prevSCS
     return bRet
